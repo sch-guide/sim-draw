@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>장비 실습 상황카드 뽑기</title>
+<style id="app-style">
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif; color: #1b2a38; -webkit-tap-highlight-color: transparent;
+    background: linear-gradient(rgba(255,255,255,.55), rgba(255,255,255,.55)), repeating-linear-gradient(90deg, #cfe6f6 0 2px, transparent 2px 56px), linear-gradient(#e4f2fc, #b9d9ef); min-height: 100vh; }
+  button { font: inherit; color: inherit; }
+  .top { background: #0f3c5a; color: #fff; padding: 11px 14px; border-bottom: 4px solid #4b9b2e; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 5; }
+  .logo { background: linear-gradient(#3d8fd1, #1c5f9f); font: italic 900 17px Arial, sans-serif; padding: 2px 8px; }
+  .me { margin-left: auto; font-size: 13px; background: rgba(255,255,255,.15); border: 0; color: #fff; border-radius: 6px; padding: 5px 10px; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 16px 14px 30px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .hint { color: #46607a; font-size: 14.5px; text-align: center; line-height: 1.5; }
+  .name { width: 100%; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .name input { width: 100%; font-size: 20px; padding: 12px 14px; border: 3px solid #1b2a38; border-radius: 10px; text-align: center; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .tab { background: #fff; border: 3px solid #1b2a38; border-radius: 8px; padding: 8px 14px; font: 900 15px 'Arial Black', Arial, sans-serif; letter-spacing: 1px; box-shadow: 3px 3px 0 rgba(27,42,56,.25); }
+  .tab.on { background: linear-gradient(#ffd84a, #ff9f1a); }
+  .who { color: #46607a; font-size: 15px; text-align: center; }
+  .who b { display: block; font-size: 28px; color: #13304a; }
+  .dice { width: 124px; height: 124px; border-radius: 24px; background: linear-gradient(145deg, #fff, #dfe3e8); border: 3px solid #1b2a38; box-shadow: 6px 6px 0 rgba(27,42,56,.25); display: grid; place-items: center; font: 900 62px Arial, sans-serif; }
+  .dice.rolling { animation: shake .18s infinite; }
+  @keyframes shake { 0% { transform: rotate(-14deg) translateY(-6px); } 50% { transform: rotate(12deg) translateY(4px); } 100% { transform: rotate(-14deg) translateY(-6px); } }
+  .dice.land { animation: land .5s ease-out; color: #e5413a; }
+  @keyframes land { 0% { transform: scale(1.3) rotate(8deg); } 100% { transform: scale(1); } }
+  .btn { background: linear-gradient(#ff6a5c, #e5413a); color: #fff; border: 3px solid #1b2a38; border-radius: 10px; font-weight: 900; font-size: 21px; padding: 12px 30px; box-shadow: 4px 4px 0 #1b2a38; }
+  .btn:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0 #1b2a38; }
+  .btn:disabled { opacity: .45; }
+  .btn.white { background: #fff; color: #1b2a38; font-size: 16px; padding: 10px 20px; }
+  .opts { width: 100%; display: flex; flex-direction: column; gap: 7px; }
+  .opt { background: #fff; border: 2px solid #1b2a38; border-radius: 6px; padding: 9px 11px; display: flex; gap: 10px; align-items: center; font-size: 14.5px; box-shadow: 3px 3px 0 rgba(27,42,56,.15); }
+  .opt { cursor: pointer; } .opt:active { background: #fff3c4; }
+  .opt .n { width: 26px; height: 26px; border-radius: 6px; background: #ffcf2e; border: 2px solid #1b2a38; font-weight: 900; display: grid; place-items: center; flex: none; }
+  .opt.off { opacity: .38; text-decoration: line-through; }
+  .opt.hit { background: #fff3c4; border-color: #e5413a; }
+  .chk { font-size: 13.5px; color: #46607a; display: flex; gap: 6px; align-items: center; }
+  .title { display: flex; flex-direction: column; align-items: center; line-height: .95; }
+  .stars { color: #ffc61a; font-size: 20px; letter-spacing: 4px; -webkit-text-stroke: 1px #8a5a00; }
+  .title span:not(.stars) { font: 900 40px 'Arial Black', Impact, sans-serif; letter-spacing: 2px; background: linear-gradient(#ffe45c 0%, #ffc21a 45%, #ff8a00 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-stroke: 2px #3b2200; filter: drop-shadow(3px 3px 0 rgba(120,50,0,.5)); }
+  .win { width: 100%; background: #fff; border: 3px solid #1b2a38; box-shadow: 6px 6px 0 rgba(27,42,56,.18); }
+  .bar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 12px; border-bottom: 3px solid #1b2a38; font-weight: 800; font-size: 14px; }
+  .body { background: #f2f2f2; padding: 18px 14px 20px; text-align: center; }
+  .situ { font-size: 16px; line-height: 1.7; white-space: pre-wrap; }
+  .mission { margin-top: 14px; font-size: 19px; font-weight: 900; line-height: 1.5; }
+  .ck { width: 100%; background: #fff; border: 2px solid #1b2a38; border-radius: 6px; padding: 12px 14px; }
+  .ck h4 { margin: 0 0 4px; color: #1a6fb0; }
+  .ck label { display: flex; gap: 10px; align-items: flex-start; padding: 10px 2px; border-bottom: 1px solid #e2ecf2; font-size: 15.5px; line-height: 1.45; }
+  .ck label:last-child { border-bottom: 0; }
+  .ck input { width: 22px; height: 22px; flex: none; margin-top: 1px; }
+  .ck label.done span { color: #7b8a96; text-decoration: line-through; }
+  .order { width: 100%; background: #1b2a38; color: #fff; border-radius: 10px; padding: 10px 12px; text-align: center; box-shadow: 4px 4px 0 rgba(27,42,56,.2); }
+  .order .big { font-size: 34px; font-weight: 900; color: #ffcf2e; line-height: 1.1; }
+  .order .sub { font-size: 13.5px; opacity: .9; margin-top: 3px; }
+  .setup { width: 100%; background: #fff; border: 2px solid #1b2a38; border-radius: 8px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .setup .lbl { font-size: 14px; color: #13304a; }
+  .setup input { font: inherit; font-size: 24px; font-weight: 800; letter-spacing: 6px; text-align: center; padding: 6px; border: 2px solid #8eafc4; border-radius: 6px; }
+  .seats { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .seat { width: 42px; height: 42px; font-size: 18px; font-weight: 900; background: #fff; border: 2px solid #1b2a38; border-radius: 8px; }
+  .seat.on { background: #ffcf2e; box-shadow: 2px 2px 0 #1b2a38; }
+  .btn:disabled { opacity: .45; }
+  .tcode { font-size: 64px; font-weight: 900; letter-spacing: 10px; color: #13304a; background: #fff; border: 3px solid #1b2a38; border-radius: 10px; padding: 4px 18px; box-shadow: 5px 5px 0 rgba(27,42,56,.2); }
+  .trow { display: flex; gap: 10px; align-items: center; padding: 8px 2px; border-bottom: 1px solid #e3ecf3; font-size: 15px; }
+  .trow .o { font-weight: 900; background: #1b2a38; color: #ffcf2e; border-radius: 6px; padding: 1px 8px; min-width: 44px; text-align: center; }
+  .trow .l { flex: 1; font-size: 13px; color: #46607a; }
+  .dstep { width: 100%; background: #fff; border: 2px solid #c9d7e2; border-radius: 8px; padding: 10px 12px; font-size: 14.5px; line-height: 1.5; color: #46607a; }
+  .dstep.on { border-color: #1b2a38; color: #13304a; }
+  .phones { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ph { background: #fff; border: 2px solid #1b2a38; border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center; min-height: 118px; justify-content: center; }
+  .ph.done { background: #fff8d8; }
+  .ph .pn { font-weight: 900; font-size: 15px; } .ph .ps { font-size: 12px; color: #46607a; }
+  .ph .pord { font-weight: 900; font-size: 18px; color: #1b2a38; background: #ffcf2e; border-radius: 6px; padding: 0 8px; }
+  .ph .pl { font-size: 12px; color: #13304a; }
+  .setup input.bad { border-color: #c4231c; background: #fff3f3; } .setup input.good { border-color: #1f9d55; }
+  .cmsg { font-size: 13.5px; text-align: center; min-height: 0; } .cmsg.ok { color: #17733e; font-weight: 700; } .cmsg.err { color: #c4231c; font-weight: 700; }
+  .stamp { background: #fff; border: 2px dashed #1b2a38; border-radius: 8px; padding: 8px 12px; font-size: 14px; text-align: center; }
+  .log { width: 100%; font-size: 13px; color: #46607a; }
+  .log b { color: #13304a; }
+  .foot { font-size: 12px; color: #6c7f90; text-align: center; }
+
+  .edit-open { margin-top: 6px; background: #fff; border: 2px dashed #1b2a38; border-radius: 8px; padding: 8px 14px; font-weight: 800; font-size: 14px; }
+  .ed { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+  .ed h3 { margin: 0; text-align: center; }
+  .ecard { background: #fff; border: 2px solid #1b2a38; border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 7px; }
+  .ecard .row { display: flex; gap: 6px; align-items: center; }
+  .ecard .no { font-weight: 900; background: #ffcf2e; border: 2px solid #1b2a38; border-radius: 6px; padding: 0 8px; }
+  .ecard label { font-size: 12.5px; color: #46607a; font-weight: 700; }
+  .ecard input, .ecard textarea { width: 100%; font: inherit; font-size: 15px; padding: 8px 10px; border: 1.5px solid #8eafc4; border-radius: 6px; }
+  .ecard textarea { min-height: 70px; resize: vertical; }
+  .sm { background: #fff; border: 1.5px solid #1b2a38; border-radius: 6px; padding: 4px 9px; font-size: 13px; font-weight: 700; }
+  .sm.red { color: #c4231c; border-color: #c4231c; }
+  .ebar { position: sticky; bottom: 0; width: 100%; background: rgba(228,242,252,.96); padding: 10px 0; display: flex; gap: 8px; justify-content: center; border-top: 2px solid #1b2a38; }
+  .msg { width: 100%; text-align: center; font-size: 14px; padding: 8px; border-radius: 6px; }
+  .msg.err { background: #fde8e8; color: #a51f1f; } .msg.ok { background: #e3f6ea; color: #17733e; }
+</style>
+</head>
+<body>
+<div class="top"><span class="logo">SIM</span><b>상황카드 뽑기</b><button class="me" id="me" hidden></button></div>
+<div class="wrap" id="app"></div>
+<script id="cards-data" type="application/json">[{"label": "CASE 1 · STAGE 01. 조립하기", "group": "HIGH FLOW", "scenario": "폐렴으로 저산소혈증이 발생한 75세 환자에게 HFNC 적용이 처방되었습니다.", "mission": "필요한 물품을 준비하고 Circuit을 올바르게 연결해 보세요.", "checklist": ["손위생 및 필요 물품 준비 (AIRVO2, Circuit, 가습 챔버, 멸균증류수, 인터페이스)", "가습 챔버 장착 및 멸균증류수 연결", "Heated breathing tube(Circuit) 올바르게 연결", "산소 공급 라인 연결", "전원 연결 및 준비(워밍업) 상태 확인"]}, {"label": "CASE 1 · STAGE 02. 설정값 맞추기", "group": "HIGH FLOW", "scenario": "AIRVO2 Circuit 연결이 완료되었습니다.\n의사는 FiO₂ 0.5, Flow 40L/min으로 적용하도록 처방하였습니다.", "mission": "처방에 따라 FiO₂와 Flow를 설정해 보세요.", "checklist": ["처방 확인 (FiO₂ 0.5, Flow 40 L/min)", "Flow 40 L/min 설정", "산소 유량을 조절하여 FiO₂ 0.5 맞추기", "온도 설정 확인", "설정값 화면 재확인"]}, {"label": "CASE 1 · STAGE 03. 환자에게 적용하기", "group": "HIGH FLOW", "scenario": "AIRVO2의 설정이 완료되었습니다.\n환자에게 고유량 산소요법을 적용하려고 합니다.", "mission": "처방에 따른 인터페이스를 선택하고 환자에게 올바르게 적용해 보세요.", "checklist": ["환자 확인 및 설명", "처방에 맞는 인터페이스(캐뉼라) 크기 선택", "캐뉼라를 비강에 올바르게 적용·고정", "적용 후 SpO₂·RR·호흡양상 재사정", "코·귀 등 압박 부위 피부 확인", "간호기록"]}, {"label": "CASE 1 · STAGE 04. 분리 후 소독", "group": "HIGH FLOW", "scenario": "2주 후, 환자 상태가 호전되어 산소요법을 3L/min Nasal Prong으로 변경하는 처방을 받았습니다.", "mission": "Circuit을 분리하고, 기기를 소독한 후 올바르게 보관해 보세요.", "checklist": ["변경 처방 확인 (Nasal prong 3L/min)", "Nasal prong으로 산소 변경 적용", "Circuit·인터페이스 분리 및 폐기", "기기 소독 실행 및 표면 소독", "소독 완료 확인 후 보관 및 기록"]}, {"label": "CASE 2 · HFNC SETTING", "group": "HIGH FLOW", "scenario": "폐렴으로 저산소혈증이 발생한 68세 환자,\n의사는 처방으로 HFNC FiO₂ 0.6, Flow 50L/min 적용하도록 하였습니다.", "mission": "체크리스트(01 조립 → 02 설정)를 수행해 보세요!", "checklist": ["손위생 및 필요 물품 준비 (AIRVO2, Circuit, 가습 챔버, 멸균증류수, 인터페이스)", "가습 챔버 장착 및 멸균증류수 연결", "Heated breathing tube(Circuit) 올바르게 연결", "산소 공급 라인 연결", "전원 연결 및 준비(워밍업) 상태 확인", "처방 확인 (FiO₂ 0.6, Flow 50 L/min)", "Flow 50 L/min 설정", "산소 유량을 조절하여 FiO₂ 0.6 맞추기", "온도 설정 확인", "설정값 화면 재확인"]}, {"label": "CASE 2 · STAGE 01. 조립하기", "group": "HIGH FLOW", "scenario": "폐렴으로 저산소혈증이 발생한 68세 환자에게 HFNC 적용이 처방되었습니다.", "mission": "필요한 물품을 준비하고 Circuit을 올바르게 연결해 보세요.", "checklist": ["손위생 및 필요 물품 준비 (AIRVO2, Circuit, 가습 챔버, 멸균증류수, 인터페이스)", "가습 챔버 장착 및 멸균증류수 연결", "Heated breathing tube(Circuit) 올바르게 연결", "산소 공급 라인 연결", "전원 연결 및 준비(워밍업) 상태 확인"]}, {"label": "CASE 2 · STAGE 02. 설정값 맞추기", "group": "HIGH FLOW", "scenario": "AIRVO2 Circuit 연결이 완료되었습니다.\n의사는 FiO₂ 0.6, Flow 50L/min으로 적용하도록 처방하였습니다.", "mission": "처방에 따라 FiO₂와 Flow를 설정해 보세요.", "checklist": ["처방 확인 (FiO₂ 0.6, Flow 50 L/min)", "Flow 50 L/min 설정", "산소 유량을 조절하여 FiO₂ 0.6 맞추기", "온도 설정 확인", "설정값 화면 재확인"]}, {"label": "HFNC 완전정복", "group": "HIGH FLOW", "scenario": "폐렴으로 저산소혈증과 호흡노력 증가가 발생한 3세 14kg 환아,\n의사는 처방으로 HFNC FiO₂ 0.4, Flow 20L/min 적용하도록 하였습니다.", "mission": "나홀로 체크리스트(01 조립 → 02 설정 → 03 적용 → 04 분리 후 소독)를 수행해 보세요!", "checklist": ["손위생 및 필요 물품 준비 (AIRVO2, Circuit, 가습 챔버, 멸균증류수, 인터페이스)", "가습 챔버 장착 및 멸균증류수 연결", "Heated breathing tube(Circuit) 올바르게 연결", "산소 공급 라인 연결", "전원 연결 및 준비(워밍업) 상태 확인", "처방 확인 (FiO₂ 0.4, Flow 20 L/min)", "Flow 20 L/min 설정", "산소 유량을 조절하여 FiO₂ 0.4 맞추기", "온도 설정 확인", "설정값 화면 재확인", "소아용 인터페이스 선택 및 적용", "적용 후 SpO₂·RR·호흡 노력 재사정", "Circuit 분리, 기기 소독 및 보관"]}, {"label": "CASE 1. 수액 주입 첫 연결", "group": "INFUSION PUMP", "scenario": "환자에게 생리식염수 1,000mL를 50mL/hr 속도로 우선 주입하도록 처방되었습니다.", "mission": "CH1에 수액세트를 장착하고 처방된 주입속도를 설정한 후 주입을 시작하세요.", "checklist": ["처방 확인 (N/S 1,000mL, 50mL/hr)", "수액세트 프라이밍 및 공기 제거", "CH1에 수액세트 장착", "주입속도 50mL/hr 입력", "클램프 해제 후 주입 시작", "주입 상태 확인 및 기록"]}, {"label": "CASE 2. 수액 주입속도 변경", "group": "INFUSION PUMP", "scenario": "CH1으로 수액이 50mL/hr로 주입되고 있습니다.\n회진 후 80mL/hr로 증량 처방되었습니다.", "mission": "CH1의 주입속도를 변경하고 주입을 재개하세요.", "checklist": ["변경 처방 확인 (80mL/hr)", "CH1 주입 일시정지", "주입속도 80mL/hr로 변경", "주입 재개 및 확인", "기록"]}, {"label": "CASE 3. 추가 수액 주입", "group": "INFUSION PUMP", "scenario": "CH1으로 수액 80mL/hr로 주입 중입니다.\n추가로 5% 포도당 500mL 수액을 CH2에서 20mL/hr로 주입하도록 처방되었습니다.", "mission": "CH1을 유지하면서 CH2에 수액을 연결하고 주입을 시작하세요.", "checklist": ["처방 확인 (5% D/W 500mL, CH2 20mL/hr)", "CH1 주입 유지 확인", "CH2에 수액세트 장착", "CH2 주입속도 20mL/hr 설정", "CH2 주입 시작 및 두 채널 확인", "기록"]}, {"label": "CASE 4. T.VOL 설정", "group": "INFUSION PUMP", "scenario": "CH1으로 수액 80mL/hr로 주입 중입니다.\n의사가 CH1 수액을 주입속도는 유지하되, 총 주입량 500mL만 주입되도록 처방하였습니다.", "mission": "현재 주입속도는 유지하면서 주입 예정량(T.Vol)을 변경해 보세요.", "checklist": ["처방 확인 (총 주입량 500mL)", "주입속도 80mL/hr 유지 확인", "T.Vol 500mL 설정", "설정 확인 후 주입 재개", "기록"]}, {"label": "CASE 5. NO LIMIT 설정", "group": "INFUSION PUMP", "scenario": "의사가 CH1 수액을 주입 속도 80mL는 유지하되, 주입 예정량 제한 없이 지속 주입하도록 처방하였습니다.", "mission": "주입속도를 유지하면서 T.Vol을 NO LIMIT로 설정해 보세요.", "checklist": ["처방 확인 (제한 없이 지속 주입)", "주입속도 80mL/hr 유지 확인", "T.Vol NO LIMIT 설정", "설정 확인 후 주입 재개"]}, {"label": "CASE 6. 누적 주입량 초기화", "group": "INFUSION PUMP", "scenario": "근무 종료 전 I&O를 확인하고 기록하였습니다.\n다음 근무조에서 주입량을 새롭게 측정할 수 있도록 누적 주입량(I.Vol)을 초기화하려고 합니다.", "mission": "현재 누적 주입량을 확인한 후, CH 1, 2의 I.Vol을 초기화해 보세요.", "checklist": ["현재 누적 주입량(I.Vol) 확인", "I&O 기록과 대조", "CH1 I.Vol 초기화", "CH2 I.Vol 초기화", "초기화 확인 및 기록"]}, {"label": "CASE 7. 알람 대응", "group": "INFUSION PUMP", "scenario": "CH1, 2 모두 주입 중입니다.\n그러다, CH2에서 OCCL 알람이 발생하였습니다.", "mission": "알람의 원인을 확인하고 적절히 조치한 후 주입을 재개하세요.", "checklist": ["알람 발생 채널 확인 (CH2)", "알람 정지 후 원인 확인 (클램프·라인 꺾임·정맥로 막힘 등)", "원인 해결", "주입 재개 및 정상 주입 확인", "알람 원인·조치 기록"]}]</script>
+<script id="app-code">
+const CARDS = JSON.parse(document.getElementById('cards-data').textContent);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('simDraw_' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('simDraw_' + k, JSON.stringify(v)); } catch (e) {} },
+};
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const $ = (s, el = document) => el.querySelector(s), $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const GROUPS = [...new Set(CARDS.map((c) => c.group))];
+let name = store.get('name', ''), group = store.get('group', GROUPS[0]), done = store.get('done', []), rolling = false;
+let code = store.get('code', '');
+if (!GROUPS.includes(group)) group = GROUPS[0];
+const key = (c) => c.group + '|' + c.label;
+const list = () => CARDS.filter((c) => c.group === group);
+const norm = (s) => String(s || '').replace(/\s+/g, '');
+// 코드 + 기기 + 이름 → 카드 번호(0부터). 교육자 화면이 명단 전원이 서로 다른 카드를 받는 코드만 골라 줌
+function pickFor(cd, g, nm) {
+  let h = 2166136261; for (const ch of cd + '#' + g + '#' + norm(nm)) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619); }
+  h ^= h >>> 16; h = Math.imul(h, 0x85ebca6b); h ^= h >>> 13; h = Math.imul(h, 0xc2b2ae35); h ^= h >>> 16;
+  return (h >>> 0) % CARDS.filter((c) => c.group === g).length;
+}
+// 숨은 규칙: 교육자 화면이 만드는 코드만 통과 (아무 숫자·오타는 대부분 걸러짐)
+function codeOk(cd) {
+  if (!/^\d{4}$/.test(cd) || /^(\d)\1{3}$/.test(cd) || '0123456789'.includes(cd) || '9876543210'.includes(cd)) return false;
+  let h = 7; for (const ch of 'sim-' + cd) h = (Math.imul(h, 31) + ch.charCodeAt(0)) | 0;
+  h ^= h >>> 15; h = Math.imul(h, 0x2c1b3c6d); h ^= h >>> 12;
+  return ((h >>> 0) % 4) === 0;
+}
+function findCode(g, names) {
+  const N = CARDS.filter((c) => c.group === g).length, ok = [];
+  if (!names.length || names.length > N) return '';
+  for (let k = 1000; k <= 9999; k++) { const cd = String(k); if (!codeOk(cd)) continue; const s = new Set(names.map((n) => pickFor(cd, g, n))); if (s.size === names.length) ok.push(cd); }
+  return ok.length ? ok[Math.floor(Math.random() * ok.length)] : '';
+}
+function meBtn() { const b = $('#me'); b.hidden = !name; b.textContent = name + ' ▾'; b.onclick = askName; }
+
+function askName() {
+  $('#me').hidden = true;
+  $('#app').innerHTML = `<div class="hint"><b style="font-size:18px;color:#13304a">장비 실습 상황카드 뽑기</b><br>내 이름을 입력하세요</div>
+    <div class="name"><input id="nm" maxlength="20" placeholder="예: 김신규" value="${esc(name)}"><button class="btn" id="go">시작하기</button></div>
+    <div class="foot">이 휴대폰에서만 기억됩니다 · 교육용 가상 사례</div>`;
+  const go = () => { const v = $('#nm').value.trim(); if (!v) return $('#nm').focus(); name = v; store.set('name', name); rollView(); };
+  $('#go').onclick = go; $('#nm').onkeydown = (e) => { if (e.key === 'Enter') go(); };
+}
+
+function codeState() {
+  const full = /^\d{4}$/.test(code), ok = codeOk(code), m = $('#cmsg'), i = $('#code');
+  $('#roll').disabled = !ok;
+  i.classList.toggle('bad', full && !ok); i.classList.toggle('good', ok);
+  m.className = 'cmsg ' + (full ? (ok ? 'ok' : 'err') : '');
+  m.textContent = full ? (ok ? '✔ 코드 확인됨' : '코드를 다시 확인하세요 (교육자 화면의 코드를 그대로 넣어 주세요)') : '';
+}
+function rollView() {
+  meBtn();
+  const L = list(), ready = codeOk(code);
+  $('#app').innerHTML = `
+    <div class="tabs">${GROUPS.map((g) => `<button class="tab ${g === group ? 'on' : ''}" data-g="${esc(g)}">${esc(g)}</button>`).join('')}</div>
+    <div class="who">수행자<b>${esc(name)}</b></div>
+    <div class="setup">
+      <div class="lbl">교육자가 알려준 <b>코드 4자리</b>를 넣고 주사위를 굴리세요</div>
+      <input id="code" inputmode="numeric" maxlength="4" placeholder="예: 3829" value="${esc(code)}">
+      <div id="cmsg" class="cmsg"></div>
+    </div>
+    <div class="dice" id="dice">?</div>
+    <button class="btn" id="roll" ${ready ? '' : 'disabled'}>🎲 주사위 굴리기</button>
+    <div class="hint" style="font-size:13px;margin-bottom:-4px">아래 CASE를 누르면 카드 내용을 볼 수 있어요</div>
+    <div class="opts">${L.map((c, i) => `<div class="opt" data-o="${i}"><span class="n">${i + 1}</span><span>${esc(c.label)}</span></div>`).join('')}</div>
+    ${done.length ? `<div class="log">내가 뽑은 상황: ${done.map((d) => `<b>${esc(d.replace('|', ' '))}</b>`).join(', ')} <button class="btn white" id="reset" style="font-size:12px;padding:3px 10px;margin-left:4px">기록 지우기</button></div>` : ''}
+    <div class="foot">이름은 교육자 명단과 똑같이 써 주세요 (오른쪽 위 이름 버튼으로 수정) · 교육용 가상 사례</div>
+    <button class="edit-open" id="teach" style="border-style:solid;font-size:13px">👩‍🏫 교육자용: 명단 · 코드 만들기 · 부르는 순서</button>
+    ${CAN_EDIT ? '<button class="edit-open" id="edit">✏️ 카드 편집 (교육자 전용)</button>' : ''}`;
+  const eb = $('#edit'); if (eb) eb.onclick = editView;
+  $('#teach').onclick = teachView;
+  $$('.opt').forEach((o) => o.onclick = () => { if (!rolling) showCard(list()[Number(o.dataset.o)], true); });
+  $$('.tab').forEach((b) => b.onclick = () => { if (rolling) return; group = b.dataset.g; store.set('group', group); rollView(); });
+  $('#code').oninput = (e) => { const v = e.target.value.replace(/\D/g, '').slice(0, 4); e.target.value = v; code = v; store.set('code', code); codeState(); };
+  codeState();
+  $('#roll').onclick = roll;
+  const r = $('#reset'); if (r) r.onclick = () => { done = []; store.set('done', done); rollView(); };
+}
+
+function teachView() {
+  meBtn();
+  let roster = store.get('roster', ''), tcodes = store.get('tcodes', {});
+  const names = () => [...new Set(roster.split('\n').map((x) => x.trim()).filter(Boolean))];
+  const draw = (msg) => {
+    const L = list(), nm = names(), tc = tcodes[group] || '';
+    const valid = codeOk(tc) && nm.length && new Set(nm.map((n) => pickFor(tc, group, n))).size === nm.length;
+    const rows = valid ? nm.map((n) => ({ n, ci: pickFor(tc, group, n) })).sort((a, b) => a.ci - b.ci) : [];
+    $('#app').innerHTML = `
+      <div class="tabs">${GROUPS.map((g) => `<button class="tab ${g === group ? 'on' : ''}" data-g="${esc(g)}">${esc(g)}</button>`).join('')}</div>
+      <div class="setup"><div class="lbl">① 이번 조 <b>교육생 이름</b> (한 줄에 한 명, 최대 ${L.length}명)</div>
+        <textarea id="ros" rows="5" style="font:inherit;font-size:16px;padding:8px;border:2px solid #8eafc4;border-radius:6px" placeholder="김신규&#10;이신규&#10;박신규">${esc(roster)}</textarea></div>
+      <button class="btn" id="newc">② 🔄 새 코드 만들기</button>
+      ${msg ? `<div class="msg err">${esc(msg)}</div>` : ''}
+      ${valid ? `<div class="hint">③ 이 코드를 교육생에게 알려 주세요. 명단의 모든 사람이 <b>서로 다른 카드</b>를 받습니다.</div>
+        <div class="tcode">${esc(tc)}</div>
+        <div class="ck"><h4>› 부르는 순서 (${esc(group)})</h4>
+        ${rows.map((r, k) => `<div class="trow"><span class="o">${k + 1}</span><span>"<b>${r.ci + 1}번</b> 나오세요" → <b>${esc(r.n)}</b></span><span class="l">${esc(L[r.ci].label)}</span></div>`).join('')}
+        <div class="foot" style="text-align:left">교육생 휴대폰의 이름이 이 명단과 똑같아야 합니다(띄어쓰기는 상관없음). 카드가 표와 다르면 이름을 확인해 주세요.</div></div>` : ''}
+      <button class="btn white" id="back">뽑기 화면으로</button>`;
+    $('#ros').oninput = (e) => { roster = e.target.value; store.set('roster', roster); };
+    $$('.tab').forEach((b) => b.onclick = () => { group = b.dataset.g; store.set('group', group); draw(); });
+    $('#newc').onclick = () => {
+      const nm = names(), N = list().length;
+      if (!nm.length) return draw('교육생 이름을 먼저 넣어 주세요.');
+      if (nm.length > N) return draw(`${group} 카드는 ${N}개라서 ${N}명까지만 겹치지 않게 나눌 수 있어요.`);
+      const cd = findCode(group, nm); if (!cd) return draw('코드를 찾지 못했어요. 다시 눌러 주세요.');
+      tcodes[group] = cd; store.set('tcodes', tcodes); draw();
+    };
+    $('#back').onclick = rollView;
+    scrollTo(0, 0);
+  };
+  draw();
+}
+
+async function roll() {
+  if (rolling || !codeOk(code)) return; rolling = true; $('#roll').disabled = true;
+  const L = list(), pick = pickFor(code, group, name), N = L.length, t0 = Date.now();
+  const d = $('#dice'); d.classList.add('rolling');
+  await new Promise((ok) => { const tick = () => { d.textContent = 1 + Math.floor(Math.random() * N); if (Date.now() - t0 < 1600) setTimeout(tick, 85); else ok(); }; tick(); });
+  d.classList.remove('rolling'); d.textContent = pick + 1; d.classList.add('land');
+  $$('.opt').forEach((o) => o.classList.toggle('hit', Number(o.dataset.o) === pick));
+  await new Promise((r) => setTimeout(r, 1000));
+  const c = L[pick];
+  if (!done.includes(key(c))) { done.push(key(c)); store.set('done', done); }
+  rolling = false; showCard(c);
+}
+
+function orderOf(c) { const L = CARDS.filter((x) => x.group === c.group); return [L.indexOf(c) + 1, L.length]; }
+function showCard(c, view) {
+  meBtn();
+  const [ord, tot] = orderOf(c);
+  const now = new Date(), t = `${now.getMonth() + 1}/${now.getDate()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  $('#app').innerHTML = `
+    <div class="title"><span class="stars">★★★★★</span>${c.group.split(' ').map((w) => `<span>${esc(w)}</span>`).join('')}</div>
+    <div class="win"><div class="bar"><span>●○○</span><span>${esc(c.label)}</span></div>
+      <div class="body"><div class="situ">${esc(c.scenario)}</div><div class="mission">${esc(c.mission)}</div></div></div>
+    <div class="order"><div class="big">수행 순서 ${ord}번</div></div>
+    ${view ? '<div class="stamp">👀 카드 미리 보기 · 내가 뽑은 카드가 아닙니다</div>' : `<div class="stamp">🙋 수행자 <b>${esc(name)}</b><br>이 화면을 교육자에게 보여 주세요</div>`}
+    <div class="ck"><h4>› 수행 체크리스트</h4>${c.checklist.map((x, i) => `<label><input type="checkbox"><span>${i + 1}. ${esc(x)}</span></label>`).join('')}</div>
+    <button class="btn white" id="back">${view ? '목록으로 돌아가기' : '다른 상황 뽑기 화면으로'}</button>`;
+  $$('.ck input').forEach((i) => i.onchange = () => i.closest('label').classList.toggle('done', i.checked));
+  $('#back').onclick = rollView;
+  scrollTo(0, 0);
+}
+
+// ─── 교육자 편집 (Claude에 로그인한 편집 권한자에게만 보임) ───
+let CAN_EDIT = false, ART = null, draft = null;
+(async () => {
+  try {
+    const [art, user] = await Promise.all([window.claude?.use?.('artifact'), window.claude?.use?.('user')]);
+    ART = art || null;
+    const ok = user ? await user.canEdit() : false;
+    CAN_EDIT = !!(ART && ok);
+    if (CAN_EDIT && $('.opts') && !$('#edit')) rollView();
+  } catch (e) {}
+})();
+
+function editView() {
+  if (!draft) draft = JSON.parse(JSON.stringify(CARDS));
+  const groups = [...new Set(draft.map((c) => c.group))];
+  $('#me').hidden = true;
+  $('#app').innerHTML = `<div class="ed">
+    <h3>✏️ 상황카드 편집</h3>
+    <div class="hint">고친 뒤 맨 아래 <b>[저장하고 공개]</b>를 누르면 교육생 휴대폰에도 바로 반영됩니다.<br>기기 구분이 같은 카드끼리 주사위로 뽑힙니다. <b>같은 기기 안에서 위에 있는 카드부터 수행 순서 1번, 2번…</b>이 됩니다. 순서는 ▲▼로 바꾸세요.</div>
+    <datalist id="gl">${groups.map((g) => `<option value="${esc(g)}">`).join('')}</datalist>
+    ${draft.map((c, i) => `<div class="ecard" data-i="${i}">
+      <div class="row"><span class="no">${esc(c.group)} ${draft.slice(0, i + 1).filter((x) => x.group === c.group).length}번</span><span style="flex:1"></span>
+        <button class="sm" data-up="${i}">▲</button><button class="sm" data-dn="${i}">▼</button><button class="sm red" data-del="${i}">삭제</button></div>
+      <label>기기 구분 (주사위 묶음)</label><input data-f="group" list="gl" value="${esc(c.group)}" placeholder="예: HIGH FLOW">
+      <label>CASE 표시</label><input data-f="label" value="${esc(c.label)}" placeholder="예: CASE 1 · STAGE 01. 조립하기">
+      <label>상황</label><textarea data-f="scenario">${esc(c.scenario)}</textarea>
+      <label>미션 (굵은 글씨)</label><input data-f="mission" value="${esc(c.mission)}">
+      <label>체크리스트 (한 줄에 한 항목)</label><textarea data-f="checklist" style="min-height:110px">${esc((c.checklist || []).join('\n'))}</textarea>
+    </div>`).join('')}
+    <button class="btn white" id="add">+ 카드 추가</button>
+    <div id="emsg"></div>
+    <div class="ebar"><button class="btn white" id="cancel">취소</button><button class="btn" id="save" style="font-size:17px;padding:10px 20px">저장하고 공개</button></div>
+  </div>`;
+  const sync = () => $$('.ecard').forEach((el) => {
+    const c = draft[Number(el.dataset.i)];
+    $$('[data-f]', el).forEach((f) => { const k = f.dataset.f; c[k] = k === 'checklist' ? f.value.split('\n').map((x) => x.trim()).filter(Boolean) : f.value.trim(); });
+  });
+  $$('[data-up],[data-dn]').forEach((b) => b.onclick = () => {
+    sync(); const i = Number(b.dataset.up ?? b.dataset.dn), j = b.dataset.up != null ? i - 1 : i + 1;
+    if (j < 0 || j >= draft.length) return; [draft[i], draft[j]] = [draft[j], draft[i]]; editView();
+  });
+  $$('[data-del]').forEach((b) => b.onclick = () => { sync(); const i = Number(b.dataset.del); draft.splice(i, 1); editView(); });
+  $('#add').onclick = () => { sync(); draft.push({ group: groups[0] || 'HIGH FLOW', label: '새 CASE', scenario: '', mission: '', checklist: [] }); editView(); setTimeout(() => $$('.ecard').pop().scrollIntoView({ block: 'center' }), 50); };
+  $('#cancel').onclick = () => { draft = null; rollView(); };
+  $('#save').onclick = async () => {
+    sync();
+    const bad = draft.findIndex((c) => !c.group || !c.label);
+    if (bad >= 0) return showMsg(`${bad + 1}번 카드의 기기 구분과 CASE 표시를 입력하세요.`, true);
+    if (!draft.length) return showMsg('카드가 하나 이상 있어야 합니다.', true);
+    $('#save').disabled = true; showMsg('저장 중입니다…');
+    try { await ART.publish(buildPage(draft)); showMsg('저장했습니다. 잠시 후 새 내용으로 다시 열립니다.'); }
+    catch (e) {
+      const code = (e && (e.code || e.message)) || '';
+      showMsg(/conflict/.test(code) ? '다른 곳에서 먼저 저장되어 페이지를 다시 불러옵니다. 다시 고쳐 주세요.' : /not_(granted|writer)/.test(code) ? '편집 권한이 없습니다. Claude에 페이지 주인 계정으로 로그인해 주세요.' : '저장하지 못했습니다: ' + code, true);
+      $('#save').disabled = false;
+    }
+  };
+  scrollTo(0, 0);
+}
+function showMsg(t, err) { const m = $('#emsg'); if (m) m.innerHTML = `<div class="msg ${err ? 'err' : 'ok'}">${esc(t)}</div>`; }
+function buildPage(cards) {
+  const data = JSON.stringify(cards).replace(/</g, '\\u003c');
+  return '<!DOCTYPE html>\n<html lang="ko">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">\n<title>' + document.title + '</title>\n'
+    + '<style id="app-style">' + document.getElementById('app-style').textContent + '</style>\n</head>\n<body>\n'
+    + '<div class="top"><span class="logo">SIM</span><b>상황카드 뽑기</b><button class="me" id="me" hidden></button></div>\n<div class="wrap" id="app"></div>\n'
+    + '<script id="cards-data" type="application/json">' + data + '<\/script>\n'
+    + '<script id="app-code">' + document.getElementById('app-code').textContent + '<\/script>\n</body>\n</html>\n';
+}
+
+// 웹 시뮬레이션 프로그램에서 넘어올 때: ?names=김신규,이신규&teach=1 / ?view=CASE 표시
+(() => {
+  let q; try { q = new URLSearchParams(location.search); } catch (e) { return name ? rollView() : askName(); }
+  const nm = q.get('names'), v = q.get('view'), g = q.get('group');
+  if (g && GROUPS.includes(g)) { group = g; store.set('group', group); }
+  if (nm) store.set('roster', nm.split(',').map((x) => x.trim()).filter(Boolean).join('\n'));
+  if (q.get('teach')) return teachView();
+  if (v) { const c = CARDS.find((x) => norm(x.label) === norm(v)) || CARDS.find((x) => norm(x.label).includes(norm(v)) || norm(v).includes(norm(x.label))); if (c) { group = c.group; return showCard(c, true); } }
+  name ? rollView() : askName();
+})();
+</script>
+</body>
+</html>
